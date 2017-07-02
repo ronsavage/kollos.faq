@@ -1,0 +1,84 @@
+The Kollos FAQ
+==============
+
+On-line docs
+------------
+
+[The Kollos FAQ](http://savage.net.au/Perl-modules/html/kollos.faq/)
+
+[The Marpa FAQ](http://savage.net.au/Perl-modules/html/marpa.faq/)
+
+[The Marpa Papers](http://savage.net.au/Perl-modules/html/marpa.papers/)
+
+Github repos
+------------
+
+[The Kollos FAQ repo](https://github.com/ronsavage/kollos.faq.git)
+
+[The Marpa FAQ repo](https://github.com/ronsavage/marpa.faq.git)
+
+[The Marpa Papers repo](https://github.com/ronsavage/marpa.papers.git)
+
+Notes
+-----
+* As of starting this document, 2017-07-09 - Kollos has not yet been released to CPAN under the name Kollos.
+So my code refers to Marpa::R3. See [MetaCPAN](https://metacpan.org) for development uploads.
+
+* Some method names appear in red. This is just an artifact of Github's version of Markdown, because I had to
+put the names in backticks because of the presence of '_' chars within the methods' names.
+
+Table of Contents
+-----------------
+* [1 What do I have to change to switch from Marpa to Kollos?](#q1)
+* [2 The parse is failing and I can't see why](#q2)
+
+<a name = 'q1'></a>
+1 What do I have to change to switch from Marpa to Kollos?
+----------------------------------------------------------
+Here are some of the things I did for [KollosX::Languages::Perl::PackUnpack](https://github.com/ronsavage/KollosX-Languages-Perl-PackUnpack):
+
+* Changed 'pause => before' to 'pause => after'. See <a href='#q2'>Q 2</a> for details.
+
+* Move the parameter - ranking_method => 'high_rule_only' - from the call to Marpa::R2::Scanless::R -> new()
+to the call to Marpa::R3::Scanless::G -> new().
+
+* Set up a hashref of event handlers. Rather than copy code into here, just see method parse() in the above-linked
+module KollosX::Languages::Perl::PackUnpack. Pass the hashref into Marpa::R3::Scanless::R -> new().
+
+* Replace the long, awkward and complex read loop:
+
+	for
+	(
+		$pos = $self -> recce -> read(\$string, $pos, $length);
+		($pos < $length);
+		$pos = $self -> recce -> resume($pos)
+	) {...}
+
+With this one (1) line:
+
+	my($pos) = $self -> recce -> read(\$string);
+
+* For whole methods which (in my code at least) were cut out, see `_validate_event()` in the Marpa-based version
+of the above module, [MarpaX::Languages::Perl::PackUnpack](https://metacpan.org/release/MarpaX-Languages-Perl-PackUnpack).
+
+* The above changes mean I no longer have to call $recce -> events() and $recce -> pause_span().
+
+<a name = 'q2'></a>
+2 The parse is failing and I can't see why
+------------------------------------------
+Are you using 'pause => before' in your grammar? We suggest you make all of these changes:
+
+* Use 'pause => after'.
+
+* Give every post-lexeme event a different name.
+
+* In your event handler(s), push things onto a stack, for processing after the parse has finished.
+
+For example I use a tree.
+See [KollosX::Languages::Perl::PackUnpack](https://github.com/ronsavage/KollosX-Languages-Perl-PackUnpack).
+In particular, see `PackUnpack._add_daughter()`, which uses a stack (an arrayref) whose nodes are elements of type
+[Tree](https://metacpan.org/release/Tree), a module I adopted.
+
+Of course these suggestions are not mandatory. You may have another way of achieving the result you want.
+
+And as a last report, re-read the docs for events.

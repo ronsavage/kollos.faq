@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head>
+<title>The Kollos FAQ</title>
+<meta charset='utf-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="offset2 span8">
+<h1>The Kollos FAQ</h1>
+
+<h2>On-line docs</h2>
+
+<p><a href="http://savage.net.au/Perl-modules/html/kollos.faq/">The Kollos FAQ</a></p>
+
+<p><a href="http://savage.net.au/Perl-modules/html/marpa.faq/">The Marpa FAQ</a></p>
+
+<p><a href="http://savage.net.au/Perl-modules/html/marpa.papers/">The Marpa Papers</a></p>
+
+<h2>Github repos</h2>
+
+<p><a href="https://github.com/ronsavage/kollos.faq.git">The Kollos FAQ repo</a></p>
+
+<p><a href="https://github.com/ronsavage/marpa.faq.git">The Marpa FAQ repo</a></p>
+
+<p><a href="https://github.com/ronsavage/marpa.papers.git">The Marpa Papers repo</a></p>
+
+<h2>Notes</h2>
+
+<ul>
+<li><p>As of starting this document, 2017-07-09 - Kollos has not yet been released to CPAN under the name Kollos.
+So my code refers to Marpa::R3. See <a href="https://metacpan.org">MetaCPAN</a> for development uploads.</p></li>
+<li><p>Some method names appear in red. This is just an artifact of Github's version of Markdown, because I had to
+put the names in backticks because of the presence of '_' chars within the methods' names.</p></li>
+</ul>
+
+<h2>Table of Contents</h2>
+
+<ul>
+<li><a href="#q1">1 What do I have to change to switch from Marpa to Kollos?</a></li>
+<li><a href="#q2">2 The parse is failing and I can't see why</a></li>
+</ul>
+
+<p><a name = 'q1'></a></p>
+
+<h2>1 What do I have to change to switch from Marpa to Kollos?</h2>
+
+<p>Here are some of the things I did for <a href="https://github.com/ronsavage/KollosX-Languages-Perl-PackUnpack">KollosX::Languages::Perl::PackUnpack</a>:</p>
+
+<ul>
+<li><p>Changed 'pause => before' to 'pause => after'. See <a href='#q2'>Q 2</a> for details.</p></li>
+<li><p>Move the parameter - ranking_method => 'high_rule_only' - from the call to Marpa::R2::Scanless::R -> new()
+to the call to Marpa::R3::Scanless::G -> new().</p></li>
+<li><p>Set up a hashref of event handlers. Rather than copy code into here, just see method parse() in the above-linked
+module KollosX::Languages::Perl::PackUnpack. Pass the hashref into Marpa::R3::Scanless::R -> new().</p></li>
+<li><p>Replace the long, awkward and complex read loop:</p>
+
+<p>for
+(
+    $pos = $self -> recce -> read(\$string, $pos, $length);
+    ($pos &lt; $length);
+    $pos = $self -> recce -> resume($pos)
+) {...}</p></li>
+</ul>
+
+<p>With this one (1) line:</p>
+
+<pre class="prettyprint linenums"><code>my($pos) = $self -&gt; recce -&gt; read(\$string);
+</code></pre>
+
+<ul>
+<li><p>For whole methods which (in my code at least) were cut out, see <code>_validate_event()</code> in the Marpa-based version
+of the above module, <a href="https://metacpan.org/release/MarpaX-Languages-Perl-PackUnpack">MarpaX::Languages::Perl::PackUnpack</a>.</p></li>
+<li><p>The above changes mean I no longer have to call $recce -> events() and $recce -> pause_span().</p></li>
+</ul>
+
+<p><a name = 'q2'></a></p>
+
+<h2>2 The parse is failing and I can't see why</h2>
+
+<p>Are you using 'pause => before' in your grammar? We suggest you make all of these changes:</p>
+
+<ul>
+<li><p>Use 'pause => after'.</p></li>
+<li><p>Give every post-lexeme event a different name.</p></li>
+<li><p>In your event handler(s), push things onto a stack, for processing after the parse has finished.</p></li>
+</ul>
+
+<p>For example I use a tree.
+See <a href="https://github.com/ronsavage/KollosX-Languages-Perl-PackUnpack">KollosX::Languages::Perl::PackUnpack</a>.
+In particular, see <code>PackUnpack._add_daughter()</code>, which uses a stack (an arrayref) whose nodes are elements of type
+<a href="https://metacpan.org/release/Tree">Tree</a>, a module I adopted.</p>
+
+<p>Of course these suggestions are not mandatory. You may have another way of achieving the result you want.</p>
+
+<p>And as a last report, re-read the docs for events.</p>
+        </div>
+    </div>
+    <div class="row footer">
+        <div class="offset2 span8">
+            <p>
+                <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/"><img alt="Creative Commons License" style="float:left; margin-right:12px; border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">The Kollos FAQ</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Ron Savage and Contributors</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported License</a> and the <a rel="license" href="http://www.gnu.org/copyleft/fdl.html">GNU Free Documentation License 1.3</a></p>
+        </div>
+    </div>
+</div>
+<script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
+</body></html>
